@@ -71,17 +71,17 @@ def load_dataset(sample_num, path):
 
 
         if 'boxing' in file:
-            y[cnt_file] = 0.2
+            y[cnt_file] = 2.0
         elif 'handclapping' in file:
-            y[cnt_file] = 0.3
+            y[cnt_file] = 2.0
         elif 'handwaving' in file:
-            y[cnt_file] = 0.4
+            y[cnt_file] = 2.0
         elif 'jogging' in file:
-            y[cnt_file] = 0.5
+            y[cnt_file] = 1.0
         elif 'running' in file:
-            y[cnt_file] = 0.6
+            y[cnt_file] = 1.0
         elif 'walking' in file:
-            y[cnt_file] = 0.7
+            y[cnt_file] = 1.0
 
         cnt_file += 1
     # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -105,6 +105,10 @@ class HARModel(nn.Module):
         self.fc1 = nn.Linear(100, 50)
         self.fc2 = nn.Linear(50, 16)
         self.fc3 = nn.Linear(16, 1)
+
+        for m in self.modules():
+            if isinstance(m, (nn.Conv2d, nn.Linear)):
+                torch.nn.init.kaiming_normal_(m.weight, mode='fan_in')
 
         self.dropout = nn.Dropout(drop_prob)
 
@@ -146,8 +150,8 @@ if __name__ == '__main__':
     #print (x_train.shape)
 
     #deefine loss function
-    criterion = nn.L1Loss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    criterion = nn.MSELoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
     #start training the network
     for epoch in range(1000):
@@ -195,8 +199,10 @@ if __name__ == '__main__':
                 outputs = model(inputs)
 
                 test_num_total += 1
-                if math.fabs(outputs - labels) < 0.05:
+                if math.fabs(outputs - labels) < 0.5:
                     test_num_correct += 1
+                else :
+                    print(labels, outputs)
                 # else:
                 #     print(y_test[i])
             print('total num: %d, correct_num: %d' % (test_num_total, test_num_correct))
