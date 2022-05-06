@@ -82,7 +82,7 @@ for epoch in range(2):
 print('Finished Training')
 
 dataiter = iter(testloader)
-images , labels = dataiter.next()
+images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth:' , ' '.join(classes[labels[j]] for j in range(4)))
 

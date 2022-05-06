@@ -18,6 +18,15 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 
+sentences = ["i like dog", "i love coffee", "i hate milk"]
+
+word_list = " ".join(sentences).split()
+word_list = list(set(word_list))
+word_dict = {w: i for i, w in enumerate(word_list)}
+number_dict = {i: w for i, w in enumerate(word_list)}
+n_class = len(word_dict)  # number of Vocabulary
+
+
 TRAIN_PATH = 'D:\Graduate Program\Train Data\KTH\Train_data'
 TEST_PATH = 'D:\Graduate Program\Train Data\KTH\Test_data'
 MODEL_PATH = 'D:\Graduate Program\Train Data\KTH\Model'
@@ -25,7 +34,6 @@ MODEL_PATH = 'D:\Graduate Program\Train Data\KTH\Model'
 MAX_FRAMENUM = 50
 VIDEO_WIDTH = 160
 VIDEO_HEIGHT = 120
-
 
 train_on_gpu = torch.cuda.is_available()
 if(train_on_gpu):
@@ -71,17 +79,17 @@ def load_dataset(sample_num, path):
 
 
         if 'boxing' in file:
-            y[cnt_file] = 2.0
+            y[cnt_file] = 0.0
         elif 'handclapping' in file:
-            y[cnt_file] = 2.0
+            y[cnt_file] = 0.0
         elif 'handwaving' in file:
-            y[cnt_file] = 2.0
+            y[cnt_file] = 0.0
         elif 'jogging' in file:
             y[cnt_file] = 1.0
         elif 'running' in file:
             y[cnt_file] = 1.0
         elif 'walking' in file:
-            y[cnt_file] = 1.0
+            y[cnt_file] = 2.0
 
         cnt_file += 1
     # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -135,9 +143,28 @@ class HARModel(nn.Module):
 
 if __name__ == '__main__':
 
+    # loss_figure = np.loadtxt("loss_record_3.txt")
+    # acc_figure = np.loadtxt("Accurcy_record_3.txt")
+    #
+    # x1 = np.arange(1, 502, 1)
+    # y1 = loss_figure
+    # x2 = np.arange(1, 101, 1)
+    # y2 = acc_figure
+    #
+    # fig = plt.figure(1)
+    # ax1 = plt.subplot(1, 2, 1)
+    # plt.plot(x1, y1, color='r')
+    # plt.xlabel('Training epoch')
+    # plt.ylabel('Training loss')
+    # ax2 = plt.subplot(1, 2, 2)
+    # plt.xlabel('Evaluate epoch')
+    # plt.ylabel('Evaluate Accuracy')
+    # plt.plot(x2, y2, color='b')
+    # plt.show()
+
     #load the train data and the test data
     print("loading train data.......")
-    x_train,y_train=load_dataset(count_sample(TRAIN_PATH), TRAIN_PATH)
+    x_train, y_train=load_dataset(count_sample(TRAIN_PATH), TRAIN_PATH)
     print("train data load success!")
     print("loading test data.......")
     x_test,y_test=load_dataset(count_sample(TEST_PATH), TEST_PATH)
@@ -150,11 +177,11 @@ if __name__ == '__main__':
     #print (x_train.shape)
 
     #deefine loss function
-    criterion = nn.MSELoss()
+    criterion = nn.L1Loss()
     optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
     #start training the network
-    for epoch in range(1000):
+    for epoch in range(2000):
         running_loss = 0.0
         for i, data in enumerate(x_train):
             inputs = data
@@ -179,11 +206,13 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-
             running_loss += loss.item()
             if i % 200 == 199:
                 print('[%d , %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss/200))
+                with open('loss_record_3.txt', 'a') as f:
+                    f.write('%.5f ' % (running_loss/200))
                 running_loss = 0.0
+
 
         if (epoch+1) % 5 == 0:
             test_num_total = 0
@@ -201,12 +230,14 @@ if __name__ == '__main__':
                 test_num_total += 1
                 if math.fabs(outputs - labels) < 0.5:
                     test_num_correct += 1
-                else :
-                    print(labels, outputs)
-                # else:
-                #     print(y_test[i])
+                else:
+                    print(labels)
+
             print('total num: %d, correct_num: %d' % (test_num_total, test_num_correct))
             print('Accuracy: %.3f %%' % (test_num_correct*100 / test_num_total))
+
+            with open('Accurcy_record_3.txt', 'a') as f:
+                f.write('%.3f ' % (test_num_correct*100 / test_num_total))
 
     # torch.save(model, MODEL_PATH)
     # print("model save success!")
