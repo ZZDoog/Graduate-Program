@@ -17,16 +17,6 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.nn.functional as F
 
-
-sentences = ["i like dog", "i love coffee", "i hate milk"]
-
-word_list = " ".join(sentences).split()
-word_list = list(set(word_list))
-word_dict = {w: i for i, w in enumerate(word_list)}
-number_dict = {i: w for i, w in enumerate(word_list)}
-n_class = len(word_dict)  # number of Vocabulary
-
-
 TRAIN_PATH = 'D:\Graduate Program\Train Data\KTH\Train_data'
 TEST_PATH = 'D:\Graduate Program\Train Data\KTH\Test_data'
 MODEL_PATH = 'D:\Graduate Program\Train Data\KTH\Model'
@@ -108,7 +98,7 @@ class HARModel(nn.Module):
         self.conv = nn.Conv2d(in_channels=1, out_channels=1, kernel_size=(3, 4), stride=(3, 4))
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.lstm = nn.LSTM(input_size=400, hidden_size=100, num_layers=n_layers, batch_first=True)
+        self.lstm = nn.LSTM(input_size=120*160, hidden_size=100, num_layers=n_layers, batch_first=True)
 
         self.fc1 = nn.Linear(100, 50)
         self.fc2 = nn.Linear(50, 16)
@@ -122,11 +112,11 @@ class HARModel(nn.Module):
 
     def forward(self, x):
 
-        x = self.conv(x)
-        x = self.pool(x)
+        # x = self.conv(x)
+        # x = self.pool(x)
 
         #batch_first=True时，lstm的imput格式为（batch_size,len,channels)
-        x = x.view(1, MAX_FRAMENUM, 400)         #(batch_size, len ,channel)
+        x = x.view(1, MAX_FRAMENUM, 120*160)         #(batch_size, len ,channel)
         x, (h_s, h_c) = self.lstm(x)
 
         output = torch.sigmoid(self.fc1(h_c))
@@ -143,31 +133,12 @@ class HARModel(nn.Module):
 
 if __name__ == '__main__':
 
-    # loss_figure = np.loadtxt("loss_record_3.txt")
-    # acc_figure = np.loadtxt("Accurcy_record_3.txt")
-    #
-    # x1 = np.arange(1, 502, 1)
-    # y1 = loss_figure
-    # x2 = np.arange(1, 101, 1)
-    # y2 = acc_figure
-    #
-    # fig = plt.figure(1)
-    # ax1 = plt.subplot(1, 2, 1)
-    # plt.plot(x1, y1, color='r')
-    # plt.xlabel('Training epoch')
-    # plt.ylabel('Training loss')
-    # ax2 = plt.subplot(1, 2, 2)
-    # plt.xlabel('Evaluate epoch')
-    # plt.ylabel('Evaluate Accuracy')
-    # plt.plot(x2, y2, color='b')
-    # plt.show()
-
     #load the train data and the test data
     print("loading train data.......")
-    x_train, y_train=load_dataset(count_sample(TRAIN_PATH), TRAIN_PATH)
+    x_train, y_train = load_dataset(count_sample(TRAIN_PATH), TRAIN_PATH)
     print("train data load success!")
     print("loading test data.......")
-    x_test,y_test=load_dataset(count_sample(TEST_PATH), TEST_PATH)
+    x_test,y_test = load_dataset(count_sample(TEST_PATH), TEST_PATH)
     print("test data load success!")
 
     #create the LSTM network
@@ -181,7 +152,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
     #start training the network
-    for epoch in range(2000):
+    for epoch in range(500):
         running_loss = 0.0
         for i, data in enumerate(x_train):
             inputs = data
@@ -209,7 +180,7 @@ if __name__ == '__main__':
             running_loss += loss.item()
             if i % 200 == 199:
                 print('[%d , %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss/200))
-                with open('loss_record_3.txt', 'a') as f:
+                with open('loss_record_nocnn_3class.txt', 'a') as f:
                     f.write('%.5f ' % (running_loss/200))
                 running_loss = 0.0
 
@@ -236,11 +207,38 @@ if __name__ == '__main__':
             print('total num: %d, correct_num: %d' % (test_num_total, test_num_correct))
             print('Accuracy: %.3f %%' % (test_num_correct*100 / test_num_total))
 
-            with open('Accurcy_record_3.txt', 'a') as f:
+            with open('Accurcy_record_nocnn_3class.txt', 'a') as f:
                 f.write('%.3f ' % (test_num_correct*100 / test_num_total))
 
-    # torch.save(model, MODEL_PATH)
-    # print("model save success!")
+    loss_figure1 = np.loadtxt("loss_record_3.txt")
+    acc_figure1 = np.loadtxt("Accurcy_record_3.txt")
+    loss_figure2 = np.loadtxt("loss_record_nocnn_3class.txt")
+    acc_figure2 = np.loadtxt("Accurcy_record_nocnn_3class.txt")
+
+    x1 = np.arange(1, 501, 1)
+    y1 = loss_figure1
+    y2 = loss_figure2
+    x2 = np.arange(1, 101, 1)
+    y3 = acc_figure1
+    y4 = acc_figure2
+
+    fig = plt.figure(1)
+    ax1 = plt.subplot(1, 2, 1)
+    plt.plot(x1, y1, color='r', label='CNN-LSTM')
+    plt.plot(x1, y2, color='g', label='regular LSTM')
+    ax1.legend(loc="best", labelspacing=1, handlelength=2, fontsize=8, shadow=False)
+
+    plt.xlabel('Training epoch')
+    plt.ylabel('Training loss')
+    ax2 = plt.subplot(1, 2, 2)
+    plt.xlabel('Evaluate epoch')
+    plt.ylabel('Evaluate Accuracy')
+    plt.plot(x2, y3, color='b', label='CNN-LSTM')
+    plt.plot(x2, y4, color='y', label='regular LSTM')
+    ax2.legend(loc="best", labelspacing=1, handlelength=2, fontsize=8, shadow=False)
+    plt.show()
+
+
 
 
 
