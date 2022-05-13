@@ -22,12 +22,12 @@ def imshow(img):
     plt.imshow(np.transpose(npimg , (1 , 2 , 0)))
     pylab.show()
 
-dataiter = iter(trainloader)
-images , labels = dataiter.next()
-for i in range(4):
-    p = plt.subplot()
-    p.set_title("label: %5s" % classes[labels[i]])
-    imshow(images[i])
+# dataiter = iter(trainloader)
+# images , labels = dataiter.next()
+# for i in range(4):
+#     p = plt.subplot()
+#     p.set_title("label: %5s" % classes[labels[i]])
+#     imshow(images[i])
 
 
 #构建网络
@@ -55,64 +55,66 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-net = Net()
-net.cuda()
 
-#define loss function
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters() , lr = 0.001 , momentum = 0.9)
+if __name__ == '__main__':
+    net = Net()
+    net.cuda()
 
-#train the Network
-for epoch in range(2):
-    running_loss = 0.0
-    for i , data in enumerate(trainloader , 0):
-        inputs , labels = data
-        inputs , labels = Variable(inputs.cuda()) , Variable(labels.cuda())
-        optimizer.zero_grad()
-        #forward + backward + optimizer
-        outputs = net(inputs)
-        loss = criterion(outputs , labels)
-        loss.backward()
-        optimizer.step()
+    # define loss function
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-        running_loss += loss.data[0]
-        if i % 2000 == 1999:
-            print('[%d , %5d] loss: %.3f' % (epoch + 1 , i + 1 , running_loss / 2000))
-            running_loss = 0.0
-print('Finished Training')
+    # train the Network
+    for epoch in range(2):
+        running_loss = 0.0
+        for i, data in enumerate(trainloader, 0):
+            inputs, labels = data
+            inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+            optimizer.zero_grad()
+            # forward + backward + optimizer
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
 
-dataiter = iter(testloader)
-images, labels = dataiter.next()
-imshow(torchvision.utils.make_grid(images))
-print('GroundTruth:' , ' '.join(classes[labels[j]] for j in range(4)))
+            running_loss += loss.data[0]
+            if i % 2000 == 1999:
+                print('[%d , %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 2000))
+                running_loss = 0.0
+    print('Finished Training')
 
-outputs = net(Variable(images.cuda()))
+    dataiter = iter(testloader)
+    images, labels = dataiter.next()
+    imshow(torchvision.utils.make_grid(images))
+    print('GroundTruth:', ' '.join(classes[labels[j]] for j in range(4)))
 
-_ , predicted = torch.max(outputs.data , 1)
-print('Predicted: ' , ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
-
-correct = 0
-total = 0
-for data in testloader:
-    images , labels = data
     outputs = net(Variable(images.cuda()))
-    _, predicted = torch.max(outputs.data , 1)
-    correct += (predicted == labels.cuda()).sum()
-    total += labels.size(0)
-print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
 
-class_correct = torch.ones(10).cuda()
-class_total = torch.ones(10).cuda()
-for data in testloader:
-    images , labels = data
-    outputs = net(Variable(images.cuda()))
-    _ , predicted = torch.max(outputs.data , 1)
-    c = (predicted == labels.cuda()).squeeze()
-    #print(predicted.data[0])
-    for i in range(4):
-        label = labels[i]
-        class_correct[label] += c[i]
-        class_total[label] += 1
+    _, predicted = torch.max(outputs.data, 1)
+    print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
 
-for i in range(10):
-    print('Accuracy of %5s : %2d %%' % (classes[i] , 100 * class_correct[i] / class_total[i]))
+    correct = 0
+    total = 0
+    for data in testloader:
+        images, labels = data
+        outputs = net(Variable(images.cuda()))
+        _, predicted = torch.max(outputs.data, 1)
+        correct += (predicted == labels.cuda()).sum()
+        total += labels.size(0)
+    print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
+
+    class_correct = torch.ones(10).cuda()
+    class_total = torch.ones(10).cuda()
+    for data in testloader:
+        images, labels = data
+        outputs = net(Variable(images.cuda()))
+        _, predicted = torch.max(outputs.data, 1)
+        c = (predicted == labels.cuda()).squeeze()
+        # print(predicted.data[0])
+        for i in range(4):
+            label = labels[i]
+            class_correct[label] += c[i]
+            class_total[label] += 1
+
+    for i in range(10):
+        print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))

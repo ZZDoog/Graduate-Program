@@ -52,17 +52,17 @@ class get_dataset(Dataset):
                 if a == False: break
 
         if 'boxing' in item_name:
-            label = 'boxing'
+            label = torch.tensor([0])
         elif 'handclapping' in item_name:
-            label = 'hand_clapping'
+            label = torch.tensor([1])
         elif 'handwaving' in item_name:
-            label = 'handwaving'
+            label = torch.tensor([2])
         elif 'jogging' in item_name:
-            label = 'jogging'
+            label = torch.tensor([3])
         elif 'running' in item_name:
-            label = 'running'
+            label = torch.tensor([4])
         elif 'walking' in item_name:
-            label = 'walking'
+            label = torch.tensor([5])
 
         return item_video, label
 
@@ -114,9 +114,11 @@ if __name__ == '__main__':
     # load the train data and the test data
     print("loading train data.......")
     train_data = get_dataset(TRAIN_PATH)
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=1)
     print("train data load success!")
     print("loading test data.......")
     test_data = get_dataset(TEST_PATH)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=1)
     print("test data load success!")
 
     # create the LSTM network
@@ -130,29 +132,29 @@ if __name__ == '__main__':
     # start training the network
     for epoch in range(500):
         running_loss = 0.0
-        item_num = 0
         for i, data in enumerate(train_data, 0):
-            item_num = item_num + 1
 
             inputs, labels = data
             inputs = torch.tensor(inputs)
 
-            inputs= inputs.type(torch.FloatTensor)
-            inputs= inputs.to(device)
+            inputs = inputs.type(torch.FloatTensor)
+            inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
             outputs = model(inputs)
 
             outputs = outputs.type(torch.FloatTensor)
             outputs = outputs.to(device)
+            outputs = torch.unsqueeze(outputs, 0)
 
             loss = criterion(outputs, labels)
+
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item()
-            if item_num % 200 == 199:
-                print('[%d , %5d] loss: %.5f' % (epoch + 1, item_num + 1, running_loss / 200))
-                with open('loss_record_nocnn_3class.txt', 'a') as f:
-                    f.write('%.5f ' % (running_loss / 200))
+            if (i+1) % 200 == 0:
+                print('[%d , %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss / 200))
+                # with open('loss_record_nocnn_3class.txt', 'a') as f:
+                #     f.write('%.5f ' % (running_loss / 200))
                 running_loss = 0.0
