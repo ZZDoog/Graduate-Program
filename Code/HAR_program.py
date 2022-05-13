@@ -144,8 +144,6 @@ if __name__ == '__main__':
             outputs = model(inputs)
 
             outputs = outputs.type(torch.FloatTensor)
-            outputs = torch.unsqueeze(outputs, 0)
-            outputs = torch.unsqueeze(outputs, 0)
             outputs = outputs.to(device)
 
             loss = criterion(outputs, labels)
