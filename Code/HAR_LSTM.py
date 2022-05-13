@@ -1,21 +1,17 @@
 import os
 import sys
 
-import numpy
+
 import numpy as np
-import _pickle as cp
 import matplotlib.pyplot as plt
-import sklearn.metrics as metrics
 import cv2 as cv
 import math
 
 import torch
 from torch import nn
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.nn.functional as F
+from torch.utils.data import Dataset
+
 
 TRAIN_PATH = 'D:\Graduate Program\Train Data\KTH\Train_data'
 TEST_PATH = 'D:\Graduate Program\Train Data\KTH\Test_data'
@@ -41,6 +37,49 @@ def count_sample(path):
     return count
 
 
+class get_dataset(Dataset):
+    def __init__(self, root_path):
+        # self
+        self.root_path = root_path
+        self.item_list = os.listdir(self.root_path)
+
+    def __getitem__(self, idx):
+        item_name = self.item_list[idx]
+        item_path = self.root_path + "/" + item_name
+
+        item_video = np.zeros((MAX_FRAMENUM, 1, VIDEO_HEIGHT, VIDEO_WIDTH), dtype=np.float32) #存储视频用的numpy数组
+
+        cap = cv.VideoCapture(item_path)
+        cnt = 0
+        while (cap.isOpened() and cnt < MAX_FRAMENUM):
+            a, b = cap.read()
+            if a == False: break
+            gray = cv.cvtColor(b, cv.COLOR_BGR2GRAY) / 255  # 将3通道的RGB图像转换为灰度图像
+            item_video[cnt][0] = gray
+            cnt += 1
+            for i in range(3):
+                a, b = cap.read()
+                if a == False: break
+
+        if 'boxing' in item_name:
+            label = 'boxing'
+        elif 'handclapping' in item_name:
+            label = 'hand_clapping'
+        elif 'handwaving' in item_name:
+            label = 'handwaving'
+        elif 'jogging' in item_name:
+            label = 'jogging'
+        elif 'running' in item_name:
+            label = 'running'
+        elif 'walking' in item_name:
+            label = 'walking'
+
+        return item_video, label
+
+    def __len__(self):
+        return len(self.item_list)
+
+
 def load_dataset(sample_num, path):
 
     files = os.listdir(path)
@@ -53,7 +92,7 @@ def load_dataset(sample_num, path):
 
     for file in files:
         videopath = path+"/"+file
-        cap=cv.VideoCapture(videopath)
+        cap = cv.VideoCapture(videopath)
 
         cnt = 0
         while(cap.isOpened() and cnt<MAX_FRAMENUM):
