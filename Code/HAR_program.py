@@ -158,3 +158,37 @@ if __name__ == '__main__':
                 # with open('loss_record_nocnn_3class.txt', 'a') as f:
                 #     f.write('%.5f ' % (running_loss / 200))
                 running_loss = 0.0
+
+
+        if (epoch+1)%5 == 0:
+            test_num_total = 0
+            test_num_correct = 0
+            with torch.no_grad():
+                for i_test, data_test in enumerate(test_data, 0):
+                    input_test, label_test = data_test
+
+                    input_test = torch.tensor(input_test)
+
+                    input_test = input_test.type(torch.FloatTensor)
+                    input_test, label_test = input_test.to(device), label_test.to(device)
+
+                    output_test = model(input_test)
+                    output_test = torch.squeeze(output_test)
+
+                    output_test = output_test.type(torch.FloatTensor)
+                    output_test = output_test.to(device)
+
+                    if output_test.argmax(0) == label_test:
+                        test_num_total += 1
+                        test_num_correct += 1
+                    else:
+                        test_num_total += 1
+            print('total num: %d, correct_num: %d' % (test_num_total, test_num_correct))
+            print('Accuracy: %.3f %%' % (test_num_correct * 100 / test_num_total))
+            with open('Accurcy_record_2022.5.14.txt', 'a') as f:
+                f.write('%.3f ' % (test_num_correct*100 / test_num_total))
+
+
+
+
+
