@@ -130,7 +130,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
     # start training the network
-    for epoch in range(500):
+    for epoch in range(3000):
         running_loss = 0.0
         for i, data in enumerate(train_data, 0):
 
@@ -155,8 +155,8 @@ if __name__ == '__main__':
             running_loss += loss.item()
             if (i+1) % 200 == 0:
                 print('[%d , %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss / 200))
-                # with open('loss_record_nocnn_3class.txt', 'a') as f:
-                #     f.write('%.5f ' % (running_loss / 200))
+                with open('loss_record_2022.5.14.txt', 'a') as f:
+                    f.write('%.5f ' % (running_loss / 200))
                 running_loss = 0.0
 
 
@@ -187,6 +187,28 @@ if __name__ == '__main__':
             print('Accuracy: %.3f %%' % (test_num_correct * 100 / test_num_total))
             with open('Accurcy_record_2022.5.14.txt', 'a') as f:
                 f.write('%.3f ' % (test_num_correct*100 / test_num_total))
+
+    loss_figure1 = np.loadtxt("loss_record_2022.5.14.txt")
+    acc_figure1 = np.loadtxt("Accurcy_record_2022.5.14.txt")
+
+    x1 = np.arange(1, 501, 1)
+    y1 = loss_figure1
+    x2 = np.arange(1, 101, 1)
+    y2 = acc_figure1
+
+    fig = plt.figure(1)
+    ax1 = plt.subplot(1, 2, 1)
+    plt.plot(x1, y1, color='r', label='CNN-LSTM')
+    ax1.legend(loc="best", labelspacing=1, handlelength=2, fontsize=8, shadow=False)
+
+    plt.xlabel('Training epoch')
+    plt.ylabel('Training loss')
+    ax2 = plt.subplot(1, 2, 2)
+    plt.xlabel('Evaluate epoch')
+    plt.ylabel('Evaluate Accuracy')
+    plt.plot(x2, y2, color='b', label='CNN-LSTM')
+    ax2.legend(loc="best", labelspacing=1, handlelength=2, fontsize=8, shadow=False)
+    plt.show()
 
 
 
