@@ -129,8 +129,9 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
+    train_epoch = 1000
     # start training the network
-    for epoch in range(3000):
+    for epoch in range(train_epoch):
         running_loss = 0.0
         for i, data in enumerate(train_data, 0):
 
@@ -153,14 +154,14 @@ if __name__ == '__main__':
             optimizer.step()
 
             running_loss += loss.item()
-            if (i+1) % 200 == 0:
-                print('[%d , %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss / 200))
-                with open('loss_record_2022.5.14.txt', 'a') as f:
-                    f.write('%.5f ' % (running_loss / 200))
+            if (i+1) % 400 == 0:
+                print('[%d , %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss / 400))
+                with open('loss_record_2022.5.15.txt', 'a') as f:
+                    f.write('%.5f ' % (running_loss / 400))
                 running_loss = 0.0
 
 
-        if (epoch+1)%5 == 0:
+        if (epoch+1) % 5 == 0:
             test_num_total = 0
             test_num_correct = 0
             with torch.no_grad():
@@ -185,15 +186,15 @@ if __name__ == '__main__':
                         test_num_total += 1
             print('total num: %d, correct_num: %d' % (test_num_total, test_num_correct))
             print('Accuracy: %.3f %%' % (test_num_correct * 100 / test_num_total))
-            with open('Accurcy_record_2022.5.14.txt', 'a') as f:
+            with open('Accurcy_record_2022.5.15.txt', 'a') as f:
                 f.write('%.3f ' % (test_num_correct*100 / test_num_total))
 
     loss_figure1 = np.loadtxt("loss_record_2022.5.14.txt")
     acc_figure1 = np.loadtxt("Accurcy_record_2022.5.14.txt")
 
-    x1 = np.arange(1, 501, 1)
+    x1 = np.arange(1, train_epoch+1, 1)
     y1 = loss_figure1
-    x2 = np.arange(1, 101, 1)
+    x2 = np.arange(1, (train_epoch/5)+1, 1)
     y2 = acc_figure1
 
     fig = plt.figure(1)
