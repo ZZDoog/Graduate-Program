@@ -1,0 +1,9 @@
+# assume the torch, opencv-python is already satisfied
+torch
+gradio
+opencv-python
+
+# for robust video matting
+av
+tqdm
+pims
